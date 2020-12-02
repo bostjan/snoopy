@@ -43,7 +43,7 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <wait.h>
+#include <sys/wait.h>
 
 
 #define   THREAD_COUNT_MAX   10000

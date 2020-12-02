@@ -41,6 +41,8 @@ jobs:
     strategy:
       matrix:
         container:
+          - alpine:latest
+
           - archlinux:base-devel
 
           - centos:8
@@ -64,6 +66,10 @@ jobs:
 
       ### Install requirements for the subsequent checkout action
       #
+
+      # Alpine
+      - run: apk add git
+        if: ${{ startsWith(matrix.container, 'alpine:') }}
 
       # Arch
       - run: pacman -Syu --noconfirm git

@@ -200,6 +200,7 @@ _installPackages()
     # Expects:
     #   - Global variable OS_ID
     #   - Global variable OS_VERSION
+    #   - Global variable PACKAGE_NAMES_ALPINE
     #   - Global variable PACKAGE_NAMES_ARCH
     #   - Global variable PACKAGE_NAMES_DEBIAN
     #   - Global variable PACKAGE_NAMES_REDHAT
@@ -217,6 +218,10 @@ _installPackages()
     fi
 
     case "$OS_ID" in
+        alpine)
+            $USE_SUDO apk add $PACKAGE_NAMES_ALPINE
+            ;;
+
         arch)
             $USE_SUDO sudo pacman -Syu --noconfirm $PACKAGE_NAMES_ARCH
             ;;
@@ -257,12 +262,14 @@ _installPackages()
 #
 
        PROGRAM_NAMES="gcc gzip make ps     socat tar wget"
+PACKAGE_NAMES_ALPINE="gcc gzip make procps socat tar wget"
   PACKAGE_NAMES_ARCH="gcc gzip make procps socat tar wget"
 PACKAGE_NAMES_DEBIAN="gcc gzip make procps socat tar wget"
 PACKAGE_NAMES_REDHAT="gcc gzip make procps socat tar wget"
   PACKAGE_NAMES_SUSE="gcc gzip make procps socat tar wget"
 if [ "$SNOOPY_SOURCE_TYPE" == "git" ]; then
            PROGRAM_NAMES="autoconf curl gcc git gzip hostname  libtoolize m4 make ps     socat tar wget"
+    PACKAGE_NAMES_ALPINE="autoconf curl gcc git gzip           libtool    m4 make procps socat tar wget automake alpine-sdk"
       PACKAGE_NAMES_ARCH="autoconf curl gcc git gzip inetutils libtool    m4 make procps socat tar wget"
     PACKAGE_NAMES_DEBIAN="autoconf curl gcc git gzip           libtool    m4 make procps socat tar wget"
     PACKAGE_NAMES_REDHAT="autoconf curl gcc git gzip           libtool    m4 make procps socat tar wget"

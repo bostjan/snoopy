@@ -35,6 +35,9 @@ jobs:
     strategy:
       matrix:
         container:
+          - alpine:latest
+          - alpine:edge
+
           - archlinux:base-devel
 
           - centos:7

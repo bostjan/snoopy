@@ -63,6 +63,7 @@ void * threadMain  (void *arg);
  */
 char      **runCmdAndArgv;
 pthread_t   tRepo[THREAD_COUNT_MAX];
+tData_t    *tArgsRepo[THREAD_COUNT_MAX];
 
 
 
@@ -91,13 +92,19 @@ int main (int argc, char **argv)
     runCmdAndArgv = &argv[2];
 
 
-    // Create threads and run the function in them
-    printf("M: Starting threads:\n");
+    printf("M: Allocating memory for each thread's args:\n");
     for (i=0 ; i<threadsToCreate ; i++) {
         tData_t *tArgs = malloc(sizeof *tArgs);
         tArgs->seqNr   = i;
+        tArgsRepo[i]   = tArgs;
+    }
+
+
+    // Create threads and run the function in them
+    printf("M: Starting threads:\n");
+    for (i=0 ; i<threadsToCreate ; i++) {
         printf(" M: Starting thread #%d:\n", i+1);
-        retVal = pthread_create(&tRepo[i], NULL, &threadMain, tArgs);
+        retVal = pthread_create(&tRepo[i], NULL, &threadMain, tArgsRepo[i]);
     }
     printf("M: All threads started\n");
 

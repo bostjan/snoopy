@@ -25,6 +25,7 @@
 /*
  * Includes order: from local to global
  */
+#define _GNU_SOURCE
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 
 
@@ -44,6 +46,7 @@
  */
 typedef struct {
     int seqNr;
+    int joined;
 } tData_t;
 
 
@@ -63,14 +66,13 @@ void * threadMain  (void *arg);
  */
 char      **runCmdAndArgv;
 pthread_t   tRepo[THREAD_COUNT_MAX];
-tData_t    *tArgsRepo[THREAD_COUNT_MAX];
+tData_t    *tDataRepo[THREAD_COUNT_MAX];
 
 
 
 int main (int argc, char **argv)
 {
     int         threadsToCreate;
-    int         i;
     int         retVal = 0;
 
 
@@ -93,27 +95,59 @@ int main (int argc, char **argv)
 
 
     printf("M: Allocating memory for each thread's args:\n");
-    for (i=0 ; i<threadsToCreate ; i++) {
-        tData_t *tArgs = malloc(sizeof *tArgs);
-        tArgs->seqNr   = i;
-        tArgsRepo[i]   = tArgs;
+    for (int i=0 ; i<threadsToCreate ; i++) {
+        tData_t *tData = malloc(sizeof *tDataRepo);
+        tData->seqNr   = i;
+        tData->joined  = 0;
+        tDataRepo[i]   = tData;
     }
 
 
     // Create threads and run the function in them
     printf("M: Starting threads:\n");
-    for (i=0 ; i<threadsToCreate ; i++) {
+    for (int i=0 ; i<threadsToCreate ; i++) {
         printf(" M: Starting thread #%d:\n", i+1);
-        retVal = pthread_create(&tRepo[i], NULL, &threadMain, tArgsRepo[i]);
+        retVal = pthread_create(&tRepo[i], NULL, &threadMain, tDataRepo[i]);
     }
     printf("M: All threads started\n");
 
     // Wait for threads to finish
-    printf("M: Waiting for all threads to finish:\n");
-    for (i=0 ; i<threadsToCreate ; i++) {
-        pthread_join(tRepo[i], NULL);
-        printf(" M: Thread #%d joined.\n", i+1);
+    int pMax = threadsToCreate;
+    double pSleep = 0.1;
+    printf("M: Waiting for all threads to finish (max %d * %f ms):\n", pMax, pSleep);
+    fflush(stdout);
+    int p;
+    for (p=0 ; p<pMax ; p++) {
+        printf(" M: Thread join loop pass #%d start:\n", p+1);
+        fflush(stdout);
+
+        for (int i=0 ; i<threadsToCreate ; i++) {
+            if (tDataRepo[i]->joined == 0) {
+                int res;
+
+                res = pthread_tryjoin_np(tRepo[i], NULL);
+                if (res == EBUSY) {
+                    printf("  M: Thread #%d has not finished executing yet.\n", i+1);
+                    fflush(stdout);
+                } else {
+                    printf("  M: Thread #%d joined.\n", i+1);
+                    fflush(stdout);
+                    tDataRepo[i]->joined = 1;
+                }
+            }
+        }
+
+        printf(" M: Thread join loop pass #%d done, sleeping for %fs now.\n", p+1, pSleep);
+        fflush(stdout);
+        sleep(pSleep);
+        sleep(1);
     }
+
+    if (p >= pMax) {
+        printf("M: ERROR - Not all threads have joined (timeout after %d * %f ms).\n", pMax, pSleep);
+        return 1;
+    }
+
     printf("M: All threads have finished.\n");
 
     /* Housekeeping and return */

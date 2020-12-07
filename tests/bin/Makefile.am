@@ -6,7 +6,7 @@ include   $(top_srcdir)/build/Makefile.am.common
 
 ### Include
 #
-AM_CFLAGS += -I$(top_srcdir)/src
+AM_CFLAGS += -I$(top_srcdir)/src -pthread
 
 
 
